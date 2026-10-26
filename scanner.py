@@ -1,9 +1,9 @@
 import re
-
+# Card numbers: 13-16 digits, optionally separated by spaces or dashes
 CARD_PATTERN = re.compile(r"\b(?:\d[ -]?){13,16}\b")
 
 
-def luhn_check(number:str) -> bool:
+def luhn_check(number: str) -> bool:
     """Return True if the number passes the Luhn checksum used by card numbers."""
     digits = [int(d) for d in number if d.isdigit()]
     total = 0
@@ -26,5 +26,5 @@ def find_card_numbers(text: str) -> list[str]:
     return found
 
 if __name__ == "__main__":
-    sample = "Order ref 1234 5678 9012 3456, card 4111 1111 1111 1111, phone 0871234567"
+    sample = "Card 4111-1111-1111-1111, card 4111111111111111, ref 1234 5678 9012 3456"
     print(find_card_numbers(sample))
