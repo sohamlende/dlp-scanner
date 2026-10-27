@@ -9,6 +9,8 @@ PPS_PATTERN = re.compile(r"\b\d{7}[A-Z]\b", re.IGNORECASE)
 # Irish IBANs: IE, 2 check digits, then 18 letters/digits (spaces allowed)
 IBAN_PATTERN = re.compile(r"\bIE\d{2}(?: ?[A-Z0-9]){18}\b", re.IGNORECASE)
 
+# Email addresses: name@domain.ending
+EMAIL_PATTERN = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")
 
 def luhn_check(number: str) -> bool:
     """Return True if the number passes the Luhn checksum used by card numbers."""
@@ -85,12 +87,19 @@ def iban_check(iban: str) -> bool:
     return int(number_text) % 97 == 1   #step 3: remainder must be 1
 
 
+def find_emails(text: str) -> list[str]:
+    """Find email addresses in the text."""
+    return EMAIL_PATTERN.findall(text)
+
 if __name__ == "__main__":
     sample = (
         "Card 4111 1111 1111 1111. Staff 1234567T. "
         "Pay IE29 AIBK 9311 5212 3456 78 or IE64IRCE92050112345678. "
-        "Typo IE29AIBK93115212345679. Ref IE12345."
+        "Typo IE29AIBK93115212345679. Ref IE12345. "
+        "Contact soham.lende@primark.ie or hr@company.com. "
+        "Not an email: name@nowhere."
     )
     print("Cards:", find_card_numbers(sample))
     print("PPS:", find_pps_numbers(sample))
     print("IBANs:", find_ibans(sample))
+    print("Emails:", find_emails(sample))
