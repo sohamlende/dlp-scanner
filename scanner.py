@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 
 # Card numbers: 13-16 digits, optionally separated by spaces or dashes
 CARD_PATTERN = re.compile(r"\b(?:\d[ -]?){13,16}\b")
@@ -91,6 +92,27 @@ def find_emails(text: str) -> list[str]:
     """Find email addresses in the text."""
     return EMAIL_PATTERN.findall(text)
 
+def scan_text(text: str) -> dict:
+    return{
+        "cards": find_card_numbers(text),
+        "pps": find_pps_numbers(text),
+        "ibans": find_ibans(text),
+        "emails": find_emails(text),
+    }
+
+def scan_file(path: Path) -> dict:
+    with open(path, "r", encoding="utf-8", errors="ignore") as file:
+        text = file.read()
+    return scan_text(text)
+
+def scan_folder(folder: str) -> dict:
+    results = {}
+    for path in Path(folder).glob("*"):
+        if path.suffix.lower() in (".txt",".csv"):
+            results[path.name] = scan_file(path)
+    return results
+
+
 if __name__ == "__main__":
     sample = (
         "Card 4111 1111 1111 1111. Staff 1234567T. "
@@ -103,3 +125,6 @@ if __name__ == "__main__":
     print("PPS:", find_pps_numbers(sample))
     print("IBANs:", find_ibans(sample))
     print("Emails:", find_emails(sample))
+    print("\n--- Folder scan ---")
+    for name, found in scan_folder("test_files").items():
+        print(name, found) 
