@@ -1,4 +1,5 @@
-import re
+import re  
+import csv
 from pathlib import Path
 
 # Card numbers: 13-16 digits, optionally separated by spaces or dashes
@@ -136,6 +137,22 @@ def classify(findings: dict) -> str:
     else:
         return "Public"
 
+def write_report(results: dict, folder: str, report_file: str) -> None:
+    """Save one row per file to a CSV report: counts only, never the values."""
+    with open(report_file, "w", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerow(["file", "label", "cards", "pps", "ibans", "emails", "error"])
+        for name, found in results.items():
+            writer.writerow([
+                Path(folder) / name,
+                classify(found),
+                len(found.get("cards", [])),
+                len(found.get("pps", [])),
+                len(found.get("ibans", [])),
+                len(found.get("emails", [])),
+                found.get("error", ""),
+            ])
+
 if __name__ == "__main__":
     sample = (
         "Card 4111 1111 1111 1111. Staff 1234567T. "
@@ -150,5 +167,8 @@ if __name__ == "__main__":
     print("Emails:", find_emails(sample))
 
     print("\n--- Folder scan ---")
-    for name, found in scan_folder("test_files").items():
+    results = scan_folder("test_files")
+    for name, found in results.items():
         print(name, classify(found))
+    write_report(results, "test_files", "report.csv")
+    print("Report saved to report.csv")
