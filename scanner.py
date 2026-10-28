@@ -125,6 +125,17 @@ def scan_folder(folder: str) -> dict:
     return results
 
 
+def classify(findings: dict) -> str:
+    """Return a classification label based on what was found in a file"""
+    if "error" in findings:
+        return "Not scanned"
+    elif findings["cards"] or findings["pps"] or findings["ibans"]:
+        return "Confidential"
+    elif findings["emails"]:
+        return "Internal"
+    else:
+        return "Public"
+
 if __name__ == "__main__":
     sample = (
         "Card 4111 1111 1111 1111. Staff 1234567T. "
@@ -140,4 +151,4 @@ if __name__ == "__main__":
 
     print("\n--- Folder scan ---")
     for name, found in scan_folder("test_files").items():
-        print(name, found)
+        print(name, classify(found))
