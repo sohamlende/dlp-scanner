@@ -13,6 +13,7 @@ IBAN_PATTERN = re.compile(r"\bIE\d{2}(?: ?[A-Z0-9]){18}\b", re.IGNORECASE)
 # Email addresses: name@domain.ending
 EMAIL_PATTERN = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")
 
+
 def luhn_check(number: str) -> bool:
     """Return True if the number passes the Luhn checksum used by card numbers."""
     digits = [int(d) for d in number if d.isdigit()]
@@ -61,6 +62,25 @@ def find_pps_numbers(text: str) -> list[str]:
             found.append(match.upper())
     return found
 
+
+def iban_check(iban: str) -> bool:
+    """Return True if an Irish IBAN passes the mod 97 check."""
+    iban = iban.replace(" ", "").upper()  # step 0: no spaces, capitals
+    if len(iban) != 22:  # Irish IBANs are always 22 characters
+        return False
+
+    rearranged = iban[4:] + iban[:4]  # step 1: move the first 4 to the end
+
+    number_text = ""  # step 2: build the long number
+    for character in rearranged:
+        if character.isalpha():  # a letter: A = 10, B = 11 ... Z = 35
+            number_text += str(ord(character) - 55)
+        else:  # a digit: keep it
+            number_text += character
+
+    return int(number_text) % 97 == 1  # step 3: remainder must be 1
+
+
 def find_ibans(text: str) -> list[str]:
     """Find Irish IBANs that match the pattern AND pass the mod 97 check."""
     found = []
@@ -70,45 +90,37 @@ def find_ibans(text: str) -> list[str]:
     return found
 
 
-def iban_check(iban: str) -> bool:
-    """Return true if an Irish IBAN passes the mod 97 check"""
-    iban = iban.replace(" ","").upper()  #step 0 - no spaces, capitals
-    if len(iban) != 22: #irish IBANS are always 22 char
-        return False
-    
-    rearranged = iban[4:] + iban[:4] #step 1 - first 4 to end
-    
-    number_text = "" #  step 2: build the long number
-    for character in rearranged:
-        if character.isalpha():  #a letter: A =10
-            number_text += str(ord(character)-55)
-        else: # a digit: keep it
-            number_text += character
-    
-    return int(number_text) % 97 == 1   #step 3: remainder must be 1
-
-
 def find_emails(text: str) -> list[str]:
     """Find email addresses in the text."""
     return EMAIL_PATTERN.findall(text)
 
+
 def scan_text(text: str) -> dict:
-    return{
+    """Run every detector on the text and return the findings by type."""
+    return {
         "cards": find_card_numbers(text),
         "pps": find_pps_numbers(text),
         "ibans": find_ibans(text),
         "emails": find_emails(text),
     }
 
+
 def scan_file(path: Path) -> dict:
-    with open(path, "r", encoding="utf-8", errors="ignore") as file:
-        text = file.read()
+    """Scan one file. If it can't be read, report why instead of crashing."""
+    try:
+        with open(path, "r", encoding="utf-8", errors="ignore") as file:
+            text = file.read()
+    except (PermissionError, FileNotFoundError) as error:
+        print("Skipped", path.name, "reason:", error.strerror)
+        return {"error": error.strerror}
     return scan_text(text)
 
+
 def scan_folder(folder: str) -> dict:
+    """Scan every .txt and .csv file in a folder and return results by file name."""
     results = {}
     for path in Path(folder).glob("*"):
-        if path.suffix.lower() in (".txt",".csv"):
+        if path.suffix.lower() in (".txt", ".csv"):
             results[path.name] = scan_file(path)
     return results
 
@@ -125,6 +137,7 @@ if __name__ == "__main__":
     print("PPS:", find_pps_numbers(sample))
     print("IBANs:", find_ibans(sample))
     print("Emails:", find_emails(sample))
+
     print("\n--- Folder scan ---")
     for name, found in scan_folder("test_files").items():
-        print(name, found) 
+        print(name, found)
