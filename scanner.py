@@ -158,13 +158,10 @@ if __name__ == "__main__":
         "Card 4111 1111 1111 1111. Staff 1234567T. "
         "Pay IE29 AIBK 9311 5212 3456 78 or IE64IRCE92050112345678. "
         "Typo IE29AIBK93115212345679. Ref IE12345. "
-        "Contact soham.lende@primark.ie or hr@company.com. "
+        "Contact jane.doe@example.com or hr@company.com. "
         "Not an email: name@nowhere."
     )
-    print("Cards:", find_card_numbers(sample))
-    print("PPS:", find_pps_numbers(sample))
-    print("IBANs:", find_ibans(sample))
-    print("Emails:", find_emails(sample))
+
 
     print("\n--- Folder scan ---")
     results = scan_folder("test_files")
